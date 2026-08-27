@@ -2,7 +2,7 @@ import "server-only";
 
 import { connectToDatabase } from "@/lib/db";
 import { generateQrToken } from "@/lib/ids";
-import { SessionModel, TokenModel, type Session, type Token } from "@/models";
+import { QUEUE_ORDER_STEP, SessionModel, TokenModel, type Session, type Token } from "@/models";
 
 export type IssueResult =
   | { ok: true; token: Token; alreadyHeld: boolean }
@@ -19,6 +19,12 @@ export interface IssueInput {
   fingerprint: string;
   ipHash: string;
   source?: "walkin" | "online";
+  /**
+   * True when a BookingHold already claimed the `onlineQuota` slot during checkout.
+   * Incrementing `counters.online` again here would double-count and silently shrink
+   * the quota by one on every paid booking.
+   */
+  quotaAlreadyClaimed?: boolean;
   /** Set for remote bookings; walk-ins stay "not_required". */
   payment?: {
     status: "pending" | "paid";
@@ -66,6 +72,7 @@ export async function issueToken(input: IssueInput): Promise<IssueResult> {
   if (existing) return { ok: true, token: existing, alreadyHeld: true };
 
   const isOnline = (input.source ?? "walkin") === "online";
+  const claimsQuota = isOnline && !input.quotaAlreadyClaimed;
 
   // One guarded write claims both the number and, for remote bookings, a slot from
   // the online quota. Splitting these into two updates would let the quota be
@@ -77,7 +84,7 @@ export async function issueToken(input: IssueInput): Promise<IssueResult> {
       $expr: {
         $and: [
           { $lt: ["$lastIssuedNumber", "$maxPatients"] },
-          ...(isOnline ? [{ $lt: ["$counters.online", "$onlineQuota"] }] : []),
+          ...(claimsQuota ? [{ $lt: ["$counters.online", "$onlineQuota"] }] : []),
         ],
       },
     },
@@ -85,7 +92,7 @@ export async function issueToken(input: IssueInput): Promise<IssueResult> {
       $inc: {
         lastIssuedNumber: 1,
         "counters.issued": 1,
-        ...(isOnline ? { "counters.online": 1 } : {}),
+        ...(claimsQuota ? { "counters.online": 1 } : {}),
       },
     },
     { new: true, lean: true },
@@ -106,6 +113,8 @@ export async function issueToken(input: IssueInput): Promise<IssueResult> {
       sessionId: session._id,
       clinicId: session.clinicId,
       tokenNumber: claimed.lastIssuedNumber,
+      // Spaced so a recalled patient can later be slotted between neighbours.
+      queueOrder: claimed.lastIssuedNumber * QUEUE_ORDER_STEP,
       publicId: generateQrToken(20),
       patient: { name: input.name, age: input.age, mobile: input.mobile },
       source: isOnline ? "online" : "walkin",
@@ -157,7 +166,7 @@ export async function getPatientView(publicId: string): Promise<PatientView | nu
       ? await TokenModel.countDocuments({
           sessionId: token.sessionId,
           status: "waiting",
-          tokenNumber: { $lt: token.tokenNumber },
+          queueOrder: { $lt: token.queueOrder },
         })
       : 0;
 

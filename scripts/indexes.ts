@@ -10,9 +10,9 @@
  * what makes it safe to rename one.
  */
 import { connectToDatabase, disconnectFromDatabase } from "@/lib/db";
-import { ClinicModel, SessionModel, TokenModel } from "@/models";
+import { BookingHoldModel, ClinicModel, SessionModel, TokenModel } from "@/models";
 
-const MODELS = [ClinicModel, SessionModel, TokenModel];
+const MODELS = [ClinicModel, SessionModel, TokenModel, BookingHoldModel];
 
 async function main() {
   await connectToDatabase();

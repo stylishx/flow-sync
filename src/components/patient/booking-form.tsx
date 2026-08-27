@@ -214,7 +214,12 @@ export function BookingForm({ qrToken }: BookingFormProps) {
           </Button>
         ) : null}
 
-        <Button size="lg" className="flex-1" onClick={next} disabled={pending}>
+        <Button
+          size="lg"
+          className="flex-1 animate-brand-gradient border-transparent bg-brand-gradient text-white shadow-brand hover:opacity-90"
+          onClick={next}
+          disabled={pending}
+        >
           {pending ? (
             <LoaderCircleIcon className="size-4 animate-spin" />
           ) : stepIndex === STEPS.length - 1 ? (

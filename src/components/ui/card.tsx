@@ -12,7 +12,11 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground shadow-xs ring-1 ring-foreground/10 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        // Modern Vibrant: the card IS the glass panel. `bg-card` and the hard
+        // `ring-foreground/10` are deliberately gone — an opaque background would
+        // defeat `backdrop-filter`, and tailwind-merge cannot dedupe a custom
+        // utility against `bg-card`, so overriding per-usage would not work.
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl glass py-(--card-spacing) text-sm text-card-foreground ring-1 shadow-brand ring-white/50 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] dark:ring-white/10 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl",
         className,
       )}
       {...props}

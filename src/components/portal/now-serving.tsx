@@ -24,13 +24,19 @@ export function NowServing({ tokenNumber, patientName, waitingCount, isLive }: N
       {isLive ? (
         <motion.span
           aria-hidden
-          className="absolute top-10 size-40 rounded-full bg-primary/10"
+          className="absolute top-10 size-40 rounded-full bg-live/20 blur-xl"
           animate={{ scale: [1, 1.25, 1], opacity: [0.5, 0, 0.5] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         />
       ) : null}
 
-      <Badge variant={isLive ? "default" : "secondary"} className="relative z-10">
+      <Badge
+        variant={isLive ? "default" : "secondary"}
+        className={cn(
+          "relative z-10 rounded-full px-3",
+          isLive && "border-transparent bg-live text-live-foreground shadow-live",
+        )}
+      >
         <span
           className={cn("mr-1.5 size-1.5 rounded-full bg-current", isLive && "animate-pulse")}
         />
@@ -45,7 +51,12 @@ export function NowServing({ tokenNumber, patientName, waitingCount, isLive }: N
             animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
             exit={{ y: -40, opacity: 0, filter: "blur(6px)" }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
-            className="font-mono text-7xl font-bold tracking-tight tabular-nums"
+            className={cn(
+              "font-mono text-7xl font-bold tracking-tight tabular-nums",
+              // The number is the thing the whole room watches — give it the brand
+              // gradient while the queue is actually moving.
+              isLive ? "animate-brand-gradient text-brand-gradient" : "text-muted-foreground",
+            )}
           >
             {tokenNumber > 0 ? tokenNumber : "—"}
           </motion.span>

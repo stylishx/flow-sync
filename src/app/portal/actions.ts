@@ -18,6 +18,8 @@ import {
   callNext,
   completeCurrent,
   createSession,
+  parkCurrent,
+  recallParked,
   setSessionStatus,
 } from "@/lib/queue";
 import { normalizeMobile } from "@/lib/mobile";
@@ -351,6 +353,51 @@ async function completeCurrentActionImpl(sessionId: string): Promise<ActionState
 
   revalidatePath(`/portal/session/${sessionId}`);
   return { success: `Token #${result.data.tokenNumber} completed.` };
+}
+
+async function parkCurrentActionImpl(sessionId: string): Promise<ActionState> {
+  const clinicId = await requireClinicId();
+  const result = await parkCurrent(sessionId, clinicId);
+  if (!result.ok) return { error: result.error };
+
+  revalidatePath(`/portal/session/${sessionId}`);
+  return { success: `Token #${result.data.tokenNumber} put on hold.` };
+}
+
+async function recallParkedActionImpl(
+  sessionId: string,
+  publicId: string,
+  afterCount: number,
+): Promise<ActionState> {
+  const clinicId = await requireClinicId();
+  const result = await recallParked(sessionId, clinicId, publicId, afterCount);
+  if (!result.ok) return { error: result.error };
+
+  revalidatePath(`/portal/session/${sessionId}`);
+  return {
+    success:
+      afterCount === 0
+        ? `Token #${result.data.tokenNumber} is next.`
+        : `Token #${result.data.tokenNumber} returns after ${afterCount} more.`,
+  };
+}
+
+export async function parkCurrentAction(sessionId: string): Promise<ActionState> {
+  return guardAction(
+    () => parkCurrentActionImpl(sessionId),
+    (error) => ({ error }),
+  );
+}
+
+export async function recallParkedAction(
+  sessionId: string,
+  publicId: string,
+  afterCount: number,
+): Promise<ActionState> {
+  return guardAction(
+    () => recallParkedActionImpl(sessionId, publicId, afterCount),
+    (error) => ({ error }),
+  );
 }
 
 async function addDelayActionImpl(sessionId: string, minutes: number): Promise<ActionState> {

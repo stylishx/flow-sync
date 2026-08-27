@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarClockIcon, StethoscopeIcon, UsersIcon } from "lucide-react";
+import { CalendarClockIcon, CalendarDaysIcon, StethoscopeIcon, UsersIcon } from "lucide-react";
 
 import { OnlineBookingForm } from "@/components/patient/online-booking-form";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { connectToDatabase } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -43,10 +45,10 @@ export default async function OnlineBookingPage({ params }: PageProps<"/c/[slug]
   const bookingOpen = Boolean(session) && clinic.onlineBooking?.enabled && onlineLeft > 0;
 
   return (
-    <main className="flex min-h-dvh flex-col items-center bg-gradient-to-b from-background via-background to-primary/5 px-4 py-10">
+    <main className="flex min-h-dvh flex-col items-center page-gradient px-4 py-10">
       <div className="w-full max-w-md space-y-6">
         <header className="space-y-1 text-center">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <span className="mx-auto flex size-12 animate-brand-gradient items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-brand">
             <StethoscopeIcon className="size-6" />
           </span>
           <h1 className="pt-2 text-2xl font-semibold tracking-tight">{clinic.name}</h1>
@@ -54,7 +56,7 @@ export default async function OnlineBookingPage({ params }: PageProps<"/c/[slug]
         </header>
 
         {session ? (
-          <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+          <Card>
             <CardContent className="flex items-center justify-around gap-4 text-center">
               <div>
                 <p className="font-mono text-2xl font-bold tabular-nums">
@@ -77,7 +79,7 @@ export default async function OnlineBookingPage({ params }: PageProps<"/c/[slug]
           </Card>
         ) : null}
 
-        <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+        <Card>
           <CardContent>
             {bookingOpen && session ? (
               <OnlineBookingForm
@@ -105,6 +107,17 @@ export default async function OnlineBookingPage({ params }: PageProps<"/c/[slug]
             )}
           </CardContent>
         </Card>
+
+        <div className="flex justify-center">
+          <Button
+            render={<Link href={`/c/${slug}/sessions`} />}
+            nativeButton={false}
+            variant="outline"
+          >
+            <CalendarDaysIcon className="size-4" />
+            See all sessions
+          </Button>
+        </div>
 
         {session ? (
           <p className="text-center text-xs text-muted-foreground">

@@ -9,7 +9,7 @@
 import { hashPasscode } from "@/lib/auth";
 import { connectToDatabase, disconnectFromDatabase } from "@/lib/db";
 import { generateQrToken } from "@/lib/ids";
-import { ClinicModel, SessionModel, TokenModel } from "@/models";
+import { ClinicModel, QUEUE_ORDER_STEP, SessionModel, TokenModel } from "@/models";
 
 /** Development only. Real clinics set their own passcode. */
 const DEV_PASSCODE = "clinic1234";
@@ -85,6 +85,7 @@ async function seed() {
       sessionId: session._id,
       clinicId: clinic._id,
       tokenNumber: index + 1,
+      queueOrder: (index + 1) * QUEUE_ORDER_STEP,
       publicId: generateQrToken(20),
       patient,
       source: index === 4 ? "online" : "walkin",

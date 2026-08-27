@@ -39,6 +39,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand-from: var(--brand-from);
+  --color-brand-via: var(--brand-via);
+  --color-brand-to: var(--brand-to);
+  --color-live: var(--live);
+  --color-live-foreground: var(--live-foreground);
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,72 +56,105 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Softly tinted, never flat white — this is what makes the glass read as glass. */
+  --background: oklch(0.985 0.008 250);
+  --foreground: oklch(0.22 0.035 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.22 0.035 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.22 0.035 265);
+
+  --primary: oklch(0.55 0.23 277);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.955 0.015 255);
+  --secondary-foreground: oklch(0.3 0.06 270);
+  --muted: oklch(0.96 0.012 253);
+  --muted-foreground: oklch(0.52 0.03 262);
+  --accent: oklch(0.95 0.03 190);
+  --accent-foreground: oklch(0.32 0.08 200);
+  --destructive: oklch(0.6 0.22 25);
+
+  /* Soft rather than harsh: depth comes from shadow, not from a hard border. */
+  --border: oklch(0.9 0.015 258);
+  --input: oklch(0.9 0.015 258);
+  --ring: oklch(0.55 0.23 277);
+
+  /* Brand gradient stops, violet -> blue. */
+  --brand-from: oklch(0.58 0.22 285);
+  --brand-via: oklch(0.58 0.2 265);
+  --brand-to: oklch(0.66 0.17 230);
+
+  /* Status accents. Emerald means the queue is moving; amber means it is not. */
+  --live: oklch(0.72 0.17 165);
+  --live-foreground: oklch(0.99 0 0);
+  --warn: oklch(0.75 0.16 60);
+  --warn-foreground: oklch(0.26 0.06 60);
+
+  --chart-1: oklch(0.6 0.2 277);
+  --chart-2: oklch(0.7 0.16 190);
+  --chart-3: oklch(0.72 0.17 145);
+  --chart-4: oklch(0.75 0.17 70);
+  --chart-5: oklch(0.65 0.2 20);
+
+  /* Every --radius-* is derived from this, so one value rounds the whole app. */
+  --radius: 1rem;
+
+  --sidebar: oklch(0.98 0.01 253);
+  --sidebar-foreground: oklch(0.22 0.035 265);
+  --sidebar-primary: oklch(0.55 0.23 277);
+  --sidebar-primary-foreground: oklch(0.99 0.005 250);
+  --sidebar-accent: oklch(0.95 0.03 190);
+  --sidebar-accent-foreground: oklch(0.32 0.08 200);
+  --sidebar-border: oklch(0.9 0.015 258);
+  --sidebar-ring: oklch(0.55 0.23 277);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  /* Deep blue-slate, never pure black. */
+  --background: oklch(0.17 0.025 268);
+  --foreground: oklch(0.96 0.008 250);
+  --card: oklch(0.22 0.028 268);
+  --card-foreground: oklch(0.96 0.008 250);
+  --popover: oklch(0.22 0.028 268);
+  --popover-foreground: oklch(0.96 0.008 250);
+
+  --primary: oklch(0.68 0.19 280);
+  --primary-foreground: oklch(0.15 0.03 275);
+  --secondary: oklch(0.27 0.03 268);
+  --secondary-foreground: oklch(0.95 0.01 250);
+  --muted: oklch(0.27 0.03 268);
+  --muted-foreground: oklch(0.72 0.03 258);
+  --accent: oklch(0.3 0.05 200);
+  --accent-foreground: oklch(0.92 0.03 195);
+  --destructive: oklch(0.65 0.2 25);
+
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: oklch(0.68 0.19 280);
+
+  --brand-from: oklch(0.66 0.2 288);
+  --brand-via: oklch(0.66 0.18 265);
+  --brand-to: oklch(0.72 0.16 230);
+
+  --live: oklch(0.75 0.16 165);
+  --live-foreground: oklch(0.16 0.03 165);
+  --warn: oklch(0.78 0.15 60);
+  --warn-foreground: oklch(0.2 0.04 60);
+
+  --chart-1: oklch(0.68 0.19 280);
+  --chart-2: oklch(0.72 0.15 190);
+  --chart-3: oklch(0.75 0.16 145);
+  --chart-4: oklch(0.78 0.15 70);
+  --chart-5: oklch(0.68 0.19 20);
+
+  --sidebar: oklch(0.2 0.026 268);
+  --sidebar-foreground: oklch(0.96 0.008 250);
+  --sidebar-primary: oklch(0.68 0.19 280);
+  --sidebar-primary-foreground: oklch(0.15 0.03 275);
+  --sidebar-accent: oklch(0.3 0.05 200);
+  --sidebar-accent-foreground: oklch(0.92 0.03 195);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.68 0.19 280);
 }
 
 @layer base {
@@ -126,5 +166,209 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Brand effects
+   --------------------------------------------------------------------------
+   Depth in this app comes from tinted shadow and blur, not from hard borders.
+   Everything here reads from the palette tokens, so dark mode is automatic.
+   -------------------------------------------------------------------------- */
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@utility bg-brand-gradient {
+  background-image: linear-gradient(120deg, var(--brand-from), var(--brand-via), var(--brand-to));
+  /* Oversized so there is somewhere for the animation to pan to. */
+  background-size: 200% 200%;
+}
+
+@utility animate-brand-gradient {
+  animation: gradient-pan 8s ease-in-out infinite;
+}
+
+@utility text-brand-gradient {
+  background-image: linear-gradient(120deg, var(--brand-from), var(--brand-to));
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Blurs a palette token rather than a hardcoded white, so it survives dark mode. */
+/*
+ * The tinted backdrop the glass panels blur. Without a coloured ground behind
+ * them, `backdrop-blur` has nothing to work with and cards read as flat boxes.
+ */
+@utility page-gradient {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      color-mix(in oklch, var(--brand-from) 22%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 100% 10%,
+      color-mix(in oklch, var(--brand-to) 16%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 0% 100%,
+      color-mix(in oklch, var(--live) 12%, transparent),
+      transparent
+    );
+  background-attachment: fixed;
+}
+
+@utility glass {
+  background-color: color-mix(in oklch, var(--card) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+
+@utility glass-strong {
+  background-color: color-mix(in oklch, var(--card) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+}
+
+/* Diffused and tinted — this replaces the border as the depth cue. */
+@utility shadow-brand {
+  box-shadow:
+    0 1px 2px color-mix(in oklch, var(--brand-to) 8%, transparent),
+    0 12px 32px -12px color-mix(in oklch, var(--brand-to) 40%, transparent);
+}
+
+@utility shadow-brand-lg {
+  box-shadow:
+    0 2px 4px color-mix(in oklch, var(--brand-to) 10%, transparent),
+    0 24px 56px -20px color-mix(in oklch, var(--brand-to) 50%, transparent);
+}
+
+@utility shadow-live {
+  box-shadow: 0 12px 32px -12px color-mix(in oklch, var(--live) 55%, transparent);
+}
+
+/*
+ * A permanently animating element on a waiting-room screen is a real accessibility
+ * problem for anyone with vestibular sensitivity. Honour the OS setting.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Print
+   --------------------------------------------------------------------------
+   Printed output is a physical artefact: a QR poster taped to a reception desk,
+   or a token slip handed to a patient. Screen units and dark mode both make a
+   mess of that, so print gets its own rules rather than inheriting the app's.
+   -------------------------------------------------------------------------- */
+
+@page {
+  size: A4;
+  /* Comfortably inside every consumer printer's unprintable edge. */
+  margin: 12mm;
+}
+
+@media print {
+  /* Force the light palette. Without this, printing while the app is in dark
+     mode produces a dark card with a low-contrast QR — which scanners refuse. */
+  :root,
+  :root[data-theme="dark"],
+  .dark {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --muted-foreground: #333333;
+    --border: #000000;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    /* Viewport units are meaningless on paper and produce blank pages. */
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Keep backgrounds and borders that carry meaning, e.g. the QR quiet zone. */
+  .print-exact {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Anything vertically centred against the viewport collapses badly on paper. */
+  .print-sheet {
+    min-height: 0 !important;
+    height: auto !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Physical sizing: a QR this size scans reliably from a few metres. */
+  .print-qr {
+    width: 90mm !important;
+    height: 90mm !important;
+  }
+
+  .print-qr-small {
+    width: 38mm !important;
+    height: 38mm !important;
+  }
+
+  .print-break-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* One slip per sheet, never split across a page boundary. */
+  .print-page {
+    break-after: page;
+    page-break-after: page;
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .page-gradient {
+    background-image: none !important;
+    background-color: #ffffff !important;
+  }
+
+  .bg-brand-gradient,
+  .text-brand-gradient {
+    background-image: none !important;
+    color: #000000 !important;
+  }
+
+  a[href]::after {
+    /* Suppress the browser's automatic URL expansion; the QR carries the link. */
+    content: "" !important;
   }
 }

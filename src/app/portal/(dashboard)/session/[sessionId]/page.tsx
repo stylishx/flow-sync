@@ -18,7 +18,9 @@ type LeanToken = Token & { _id: unknown };
 
 function toRow(token: LeanToken): QueueRow {
   return {
-    id: String(token._id),
+    // publicId, not the ObjectId: recall is addressed by the same handle the patient
+    // page uses, and the ObjectId should not travel to the client.
+    id: token.publicId,
     tokenNumber: token.tokenNumber,
     name: token.patient?.name ?? "Unknown",
     age: token.patient?.age ?? 0,
@@ -35,7 +37,7 @@ export default async function SessionPage({ params }: PageProps<"/portal/session
   const snapshot = await getQueueSnapshot(sessionId, clinicId);
   if (!snapshot) notFound();
 
-  const { session, serving, waiting, recent, waitingCount } = snapshot;
+  const { session, serving, waiting, parked, recent, waitingCount } = snapshot;
   const qrSvg = await renderSessionQrSvg(session.qrToken);
 
   return (
@@ -74,12 +76,8 @@ export default async function SessionPage({ params }: PageProps<"/portal/session
         </div>
 
         <Button
-          render={
-            <Link
-              href={`/portal/session/${sessionId}nativeButton={false}
-          /print`}
-            />
-          }
+          render={<Link href={`/portal/print/${sessionId}`} />}
+          nativeButton={false}
           variant="outline"
           className="ml-auto"
         >
@@ -94,13 +92,14 @@ export default async function SessionPage({ params }: PageProps<"/portal/session
         currentTokenNumber={session.currentTokenNumber}
         servingName={serving?.patient?.name}
         waiting={(waiting as LeanToken[]).map(toRow)}
+        parked={(parked as LeanToken[]).map(toRow)}
         recent={(recent as LeanToken[]).map(toRow)}
         waitingCount={waitingCount}
         consultMinutes={session.estimatedConsultMinutes}
         emergencyDelayMinutes={session.emergencyDelayMinutes}
       />
 
-      <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+      <Card>
         <CardContent className="flex flex-wrap items-center gap-4">
           <div
             className="size-24 shrink-0 overflow-hidden rounded-lg bg-white p-1.5 [&>svg]:size-full"

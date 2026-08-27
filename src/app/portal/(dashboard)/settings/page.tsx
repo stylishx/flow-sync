@@ -41,13 +41,8 @@ export default async function SettingsPage() {
 
         {clinic.onlineBooking?.enabled ? (
           <Button
-            render={
-              <Link
-                href={`/c/${clinic.slug}nativeButton={false}
-          `}
-                target="_blank"
-              />
-            }
+            render={<Link href={`/c/${clinic.slug}`} target="_blank" />}
+            nativeButton={false}
             variant="outline"
             className="ml-auto"
           >

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { PrintButton } from "@/components/portal/print-button";
+import { TokenSlip } from "@/components/patient/token-slip";
 import { TokenStatus } from "@/components/patient/token-status";
 import { connectToDatabase } from "@/lib/db";
 import { getPatientView } from "@/lib/issue";
@@ -30,26 +32,46 @@ export default async function TokenPage({ params }: PageProps<"/t/[publicId]">) 
   if (!clinic) notFound();
 
   return (
-    <main className="flex min-h-dvh flex-col items-center bg-gradient-to-b from-background via-background to-primary/5 px-4 py-10">
+    <main className="flex min-h-dvh flex-col items-center page-gradient px-4 py-10 print:bg-none print:py-0">
       <div className="w-full max-w-md space-y-5">
-        <header className="space-y-0.5 text-center">
+        <header className="space-y-0.5 text-center print:hidden">
           <h1 className="text-lg font-semibold tracking-tight">{clinic.name}</h1>
           <p className="text-sm text-muted-foreground">{clinic.doctorName}</p>
         </header>
 
-        <TokenStatus
-          qrToken={session.qrToken}
+        <div className="print:hidden">
+          <TokenStatus
+            qrToken={session.qrToken}
+            tokenNumber={token.tokenNumber}
+            patientName={token.patient?.name ?? "Patient"}
+            tokenStatus={token.status}
+            consultMinutes={session.estimatedConsultMinutes}
+            peopleAhead={view.peopleAhead}
+            initial={{
+              status: session.status,
+              currentTokenNumber: session.currentTokenNumber,
+              emergencyDelayMinutes: session.emergencyDelayMinutes,
+              waitingCount,
+            }}
+          />
+        </div>
+
+        <TokenSlip
+          clinicName={clinic.name}
+          doctorName={clinic.doctorName}
           tokenNumber={token.tokenNumber}
           patientName={token.patient?.name ?? "Patient"}
-          tokenStatus={token.status}
-          consultMinutes={session.estimatedConsultMinutes}
-          initial={{
-            status: session.status,
-            currentTokenNumber: session.currentTokenNumber,
-            emergencyDelayMinutes: session.emergencyDelayMinutes,
-            waitingCount,
-          }}
+          patientMobile={token.patient?.mobile ?? ""}
+          sessionDate={session.sessionDate.toISOString().slice(0, 10)}
+          startTime={session.startTime}
+          endTime={session.endTime}
+          qrToken={session.qrToken}
+          statusUrl={`/t/${publicId}`}
         />
+
+        <div className="flex justify-center print:hidden">
+          <PrintButton label="Print token slip" placement="inline" variant="outline" />
+        </div>
 
         <div className="space-y-1 text-center text-xs text-muted-foreground">
           <p>Alerts go to {maskMobile(token.patient?.mobile ?? "")} when you are nearly up.</p>

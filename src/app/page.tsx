@@ -16,20 +16,22 @@ export const metadata: Metadata = {
  */
 export default function HomePage() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-background via-background to-primary/5 px-6 py-16">
+    <main className="flex min-h-dvh flex-col items-center justify-center page-gradient px-6 py-16">
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="space-y-3">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <span className="mx-auto flex size-14 animate-brand-gradient items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-brand-lg">
             <StethoscopeIcon className="size-7" />
           </span>
-          <h1 className="text-3xl font-semibold tracking-tight">Flow-Sync</h1>
+          <h1 className="animate-brand-gradient text-brand-gradient text-5xl font-bold tracking-tight">
+            Flow-Sync
+          </h1>
           <p className="text-muted-foreground">
             Live token queues for clinics. Patients scan, take a number, and watch the queue move —
             no app, no login, no waiting room guesswork.
           </p>
         </div>
 
-        <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+        <Card>
           <CardContent className="flex flex-col items-center gap-3 text-center">
             <QrCodeIcon className="size-7 text-muted-foreground" />
             <div>
@@ -50,7 +52,12 @@ export default function HomePage() {
           >
             Staff sign in
           </Button>
-          <Button render={<Link href="/portal/register" />} nativeButton={false} size="lg">
+          <Button
+            render={<Link href="/portal/register" />}
+            nativeButton={false}
+            size="lg"
+            className="animate-brand-gradient border-transparent bg-brand-gradient text-white shadow-brand hover:opacity-90"
+          >
             Register a clinic
           </Button>
         </div>

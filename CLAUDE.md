@@ -59,6 +59,40 @@ and form behaviour:
 Path alias: `@/*` → `./src/*`. `components.json` also aliases `@/hooks`, but `src/hooks/`
 does not exist yet — create it if you need it.
 
+## Design system — "Modern Vibrant"
+
+The stock monochrome shadcn look was rejected. Build new UI to this, not to defaults.
+
+- **Palette lives in `oklch`, not HSL.** shadcn generates hover states as
+  `bg-primary/80`; in HSL those mixes go muddy and lightness drifts between hues.
+  Every token is defined in `:root` and `.dark` in `globals.css`.
+- **Brand is violet → blue** (`--brand-from` / `--brand-via` / `--brand-to`).
+  **`--live` (emerald) means the queue is moving**; **`--warn` (amber) means it is
+  not.** Never use the brand colour for live status — the distinction is what a
+  patient reads from across a room.
+- **Backgrounds are tinted, never flat white or black.** `page-gradient` supplies the
+  coloured ground; without it `backdrop-filter` has nothing to blur and glass panels
+  read as flat boxes.
+- **Depth comes from tinted shadow, not from borders.** Use `shadow-brand`,
+  `shadow-brand-lg`, `shadow-live`. Avoid hard border colours.
+- **`Card` IS the glass panel.** `src/components/ui/card.tsx` carries `glass`,
+  `rounded-2xl`, `shadow-brand` and a soft `ring-white/50`. Do NOT add `glass` or a
+  border at the usage site: `tailwind-merge` cannot dedupe a custom utility against
+  `bg-card`, so an opaque background would win and kill the blur. Per-usage classes
+  should state only what differs (e.g. `rounded-3xl`, `shadow-brand-lg`).
+- **Custom utilities are declared with `@utility` in `globals.css`** — `glass`,
+  `glass-strong`, `page-gradient`, `bg-brand-gradient`, `animate-brand-gradient`,
+  `text-brand-gradient`, `shadow-brand*`, `shadow-live`. There is no
+  `tailwind.config.ts` and one must not be created.
+- **`--radius` is the single rounding dial.** Every `--radius-*` derives from it, so
+  changing it rounds the whole app at once.
+- **Animation respects `prefers-reduced-motion`.** A permanently animating gradient on
+  a waiting-room screen is an accessibility problem; the global reduce block in
+  `globals.css` handles it and must not be removed.
+- **Print strips all of it.** The `@media print` block forces white, kills
+  `page-gradient` and both brand gradients, and keeps QR codes pure black — a gradient
+  behind a QR stops scanners reading it.
+
 ## Gotchas
 
 - `src/app/layout.tsx` types props as `LayoutProps<"/">`, a **generated** global type written
@@ -79,6 +113,16 @@ does not exist yet — create it if you need it.
 - **`autoIndex` is off in production.** New or changed indexes only reach a deployed
   database via `syncIndexes()`, which `npm run seed` runs. Adding an index to a schema
   is not enough.
+- **`queueOrder` decides serving order, NOT `tokenNumber`.** `tokenNumber` is immutable
+  and printed on the patient's slip, so a held patient cannot be re-inserted by
+  renumbering. Tokens are issued at `tokenNumber * QUEUE_ORDER_STEP` (1000) and a
+  recall lands on the midpoint between neighbours, so there is always room to insert.
+  Anything that means "position in the queue" — `callNext`, wait estimates, the
+  two-away notification sweep — must read `queueOrder`, never token-number arithmetic.
+- **`parked` is reversible, `skipped` is not.** A parked patient keeps their number,
+  leaves the waiting pool, and can be recalled. Note the name: `Token.activeHold`
+  (anti-abuse) and `BookingHold` (payments) already use "hold", so the queue concept is
+  deliberately called "parked" in code even though the UI says "Hold".
 - **Token issuance must be atomic.** Use `findOneAndUpdate` with `$inc` on
   `Session.lastIssuedNumber`. A read-then-write hands two patients the same number the
   moment one QR code is scanned twice at once — the normal case in a waiting room.
@@ -107,6 +151,29 @@ does not exist yet — create it if you need it.
   runs behind `guardAction` in `lib/action-guard.ts`, which converts infrastructure
   failures into a readable form error while re-throwing Next's `redirect()`/`notFound()`
   control-flow throws.
+- **`DialogTrigger` and `DialogClose` carry no styling of their own.** They are bare
+  pass-throughs to Base UI, so using one directly renders a NATIVE UNSTYLED BUTTON.
+  Always give them a styled element: `<DialogTrigger render={<Button />}>Label</DialogTrigger>`.
+- **Print is its own medium, not a screen variant.** Print routes must live OUTSIDE the
+  `(dashboard)` route group so they do not inherit the portal header and `max-w-6xl`
+  wrapper. The `@media print` block at the end of `globals.css` forces the light
+  palette (a dark-mode QR will not scan), neutralises `dvh`/centring (which produce
+  blank pages on paper), and sizes QR codes in millimetres via `.print-qr` /
+  `.print-qr-small`. Printing is `window.print()` — no PDF library — because the
+  browser renders the same CSS and its "Save as PDF" is what staff already know.
+- **Payment: verify first, issue second.** The browser's claim that it paid is worth
+  nothing. `/api/payment/verify` recomputes `HMAC_SHA256(orderId|paymentId)` with the
+  key secret and compares it timing-safely; only then is a token issued. The fee is
+  read from the clinic document, never from the request body.
+- **A `BookingHold` reserves the `onlineQuota` slot during checkout.** Because the
+  token no longer exists until payment verifies, without a hold two patients could both
+  pay for the last online slot. `consumeHold` flips `held -> consumed` atomically, so a
+  retried Razorpay callback cannot issue a second token. Expired holds are released by
+  the cron sweep; a hold that verifies but cannot be issued becomes `orphaned` and is
+  logged as REFUND REQUIRED rather than silently dropped.
+- **`issueToken({ quotaAlreadyClaimed: true })` when coming from a hold.** Otherwise
+  `counters.online` is incremented twice and the quota silently shrinks on every paid
+  booking.
 - **Server Actions are their own entry points.** A layout auth check does not protect
   them, because actions are directly addressable and do not re-run layouts. Every
   mutating action in `app/portal/actions.ts` calls `requireClinicId()` itself.
@@ -163,6 +230,75 @@ before the first populate.
   Prettier on every file you write or edit.
 
 ---
+
+## Future enhancements
+
+Agreed backlog, not yet built. Each entry records the constraint it will run into, so
+the design work is not redone from scratch.
+
+### 1. "No-show" hold queue — BUILT
+
+See the STATUS entry below. Original design notes retained for context:
+
+A **Hold** action for a patient who is not present when called, letting the compounder
+slot them back in later without issuing a new token.
+
+- The queue is ordered by `tokenNumber`, which is immutable and printed on the
+  patient's slip. Re-inserting therefore cannot mean renumbering — it needs a separate
+  ordering field (e.g. `recallAfter` or `queueRank`) that `callNext` sorts on ahead of
+  `tokenNumber`.
+- **Naming collision to avoid:** `Token.activeHold` (anti-abuse guard) and the
+  `BookingHold` model (payment reservation) already use "hold". A third meaning would
+  be genuinely confusing — call this state `parked` or `on_hold`.
+- `TOKEN_STATUSES` already declares `no_show`, currently unused. Decide whether
+  "parked" is a distinct status or `no_show` plus a recall field.
+- Open question for the user: does a held patient return immediately next, after a
+  fixed number of patients, or at a position the compounder picks?
+
+### 2. Smart TV display mode
+
+Full-screen waiting-room route showing the current token and the next five.
+
+- **A bare `/tv-display` has no clinic context.** It needs to identify a session —
+  either `/tv/[qrToken]` (public, unguessable) or an authenticated
+  `/portal/tv/[sessionId]`. A TV that reboots must come back without someone logging
+  in, which argues for the qrToken form.
+- **Privacy:** this screen is visible to a whole waiting room. Show token numbers and
+  at most a first name — never full name, age, or mobile.
+- Reuse `useQueueStream`; the SSE layer already carries exactly this data.
+- TV browsers are frequently old. `backdrop-filter`, `oklch` and `color-mix` may not
+  render — this route should use a flat high-contrast variant of the palette, not the
+  glass design system, and be tested at 10 feet.
+
+### 3. Lightweight patient CRM
+
+Show a patient's past visits when the compounder enters their mobile number.
+
+- Needs a new index on `{ clinicId: 1, "patient.mobile": 1, createdAt: -1 }`; the
+  existing mobile index is per-session and partial, so it cannot serve this.
+- **One mobile is often a whole family.** A parent booking for three children puts
+  them all under one number, so history keyed on mobile alone will merge different
+  people. Group by mobile, then disambiguate by name, and never present merged history
+  as if it were one person.
+- **This is a real data-protection step up** from holding a token for a day: it turns
+  the app into a store of health-adjacent visit history. Needs a retention policy and,
+  under India's DPDP Act, a defensible basis for keeping it. Worth a decision before
+  building, not after.
+
+### 4. Dynamic wait time
+
+Estimate from the rolling average of recent consultations rather than a static number.
+
+- The data already exists: `Token.calledAt` and `Token.completedAt` give real consult
+  durations.
+- **Three samples is a very small window** — one long consultation would swing every
+  patient's estimate. Prefer blending the rolling average with the clinic's configured
+  `estimatedConsultMinutes`, and clamp the result to a sane range.
+- The first patients of a session have no history; fall back to the static value.
+- **Architectural consequence:** `estimateWaitMinutes` in `lib/wait.ts` is a pure,
+  client-safe function today. A dynamic average must be computed server-side and
+  passed down (and added to the SSE `queue` payload), so that file stays pure and the
+  average travels as data.
 
 ## STATUS
 
@@ -263,7 +399,87 @@ models with all indexes, `generateQrToken()`, dev seed, Prettier + format-on-edi
   passcode hash/verify over 8 cases including the length-mismatch path that would
   otherwise make `timingSafeEqual` throw.
 
-### Next pending task — first real run against MongoDB
+### Completed — print fix + button audit
+
+- **Print rebuilt.** The poster moved from `portal/(dashboard)/session/[id]/print` to
+  `portal/print/[sessionId]`, outside the dashboard group, so it no longer inherits the
+  sticky header or the padded `max-w-6xl` wrapper. Added the project's first
+  `@media print` block and `@page { size: A4; margin: 12mm }`; QR now sized in mm.
+- **Patient token slip** (`components/patient/token-slip.tsx`) — `hidden print:block` on
+  `/t/[publicId]`, so the page stays a live status screen but prints a clean slip. Its
+  QR points at the session, not the patient's private status URL: a slip left on a
+  chair must not expose a name and mobile number.
+- **Fixed a bug I introduced earlier**: the regex that added `nativeButton={false}`
+  corrupted two template-literal `href`s, injecting the prop inside the string. Both
+  repaired; all 12 hrefs in the project now verified well-formed.
+- **Unstyled buttons: not reproduced.** No raw `<button>` in app code; every button on
+  `/`, `/portal/login`, `/portal/register` and 404 carries the full shadcn class list;
+  the dev stylesheet serves 200 with preflight and all utilities; every design token is
+  defined. Found the latent `DialogTrigger`/`DialogClose` trap (documented above) but no
+  live instance. Awaiting a specific screen from the user.
+
+### Completed — Step 2: sessions list + Razorpay
+
+- **`/c/[slug]/sessions`** — public list of today's and upcoming sessions with status,
+  now-serving number, waiting count, slots left, estimated wait and online slots
+  remaining. Waiting counts come from one grouped aggregate, not a query per session.
+- **Razorpay implemented for real**, replacing the placeholder that threw:
+  `POST /api/payment/create-order` (creates the order, reserves the quota slot) →
+  Checkout modal → `POST /api/payment/verify` (timing-safe HMAC) → token issued.
+- **`BookingHold` model** with unique `orderId` and per-device / per-mobile partial
+  unique indexes, so one patient cannot sit on several slots.
+- The old `app/c/actions.ts` Server Action booking path was deleted — there is now one
+  way to book online, not two.
+- `PAYMENT_PROVIDER=stub` short-circuits the modal and goes straight to verify, so the
+  whole flow is walkable without live keys.
+- Verified: Razorpay signature checking across 7 cases (valid, tampered, wrong order,
+  wrong payment, empty, short, swapped order/payment) — all correct; `BookingHold`
+  registers with all five indexes as declared.
+
+### Completed — Modern Vibrant UI theme
+
+- Palette rewritten: every token had chroma `0` (literally greyscale), which is why the
+  app looked black-and-white. Now violet→blue brand, emerald `--live`, amber `--warn`,
+  faint blue-tinted light background, deep blue-slate dark background.
+- Added `@utility` effects: `page-gradient`, `glass`, `glass-strong`,
+  `bg-brand-gradient`, `animate-brand-gradient`, `text-brand-gradient`, `shadow-brand`,
+  `shadow-brand-lg`, `shadow-live`, plus `gradient-pan` keyframes.
+- `--radius` `0.625rem → 1rem`, rounding every component at once.
+- `ui/card.tsx` rebased as the glass panel; its opaque `bg-card` and hard
+  `ring-foreground/10` were what defeated the blur and produced the harsh borders.
+- Gradient CTAs on the five primary actions; gradient + emerald pulse on both live
+  token displays; glass header.
+- Verified in a production build: all nine custom utilities emit, `--primary` is
+  `#5954f3` and `--live` is `#00c38b` (previously pure grey), `.glass` compiles with a
+  `color-mix` fallback plus `backdrop-filter`, `prefers-reduced-motion` is honoured,
+  and the print block still forces white with gradients stripped.
+- No `tailwind.config.ts` was created — Tailwind v4 is CSS-first.
+
+### Completed — no-show hold queue
+
+- `Token.queueOrder` (spaced by `QUEUE_ORDER_STEP` = 1000) decouples serving position
+  from the printed token number; `callNext` and the queue snapshot now sort on it.
+- New `parked` status plus `Token.parkedAt` and `Session.counters.parked`.
+  `parkCurrent()` holds whoever is in the chair without advancing the queue;
+  `recallParked(publicId, afterCount)` slots them back at Next / After 2 / After 5.
+- Portal: a "Hold — patient not here" action beside Complete and Skip, and an amber
+  "On hold" panel with per-patient call-back controls.
+- Patient page: an explicit "You were called and missed — please see the reception
+  desk" state. Previously a held patient just saw a silently frozen number.
+- **Two knock-on correctness fixes this forced**, both real bugs once position and
+  number can diverge:
+  - `peopleAhead` was `tokenNumber - currentTokenNumber - 1`, which is wrong for
+    everyone behind a recalled patient. Now counted server-side from `queueOrder` and
+    refreshed via `router.refresh()` when the stream reports movement.
+  - The two-away WhatsApp sweep selected on `tokenNumber <= current + 2`, which would
+    have messaged the wrong people. Now takes the first N by `queueOrder`.
+- Verified: recall placement across 7 cases. The probe caught a genuine bug — asking
+  "After 5" with only two people waiting put the patient FIRST instead of last, because
+  indexing past the end left the lower bound at 0. Fixed by clamping the index.
+- `npm run db:indexes` must be run before this is used: the hot queue index moved from
+  `{sessionId, status, tokenNumber}` to `{sessionId, status, queueOrder}`.
+
+### Also still pending — first real run against MongoDB
 
 Every phase is code-complete and none of it has touched a live database. Create
 `.env.local`, then `npm run db:indexes` (proves the partial unique indexes actually
@@ -276,8 +492,10 @@ Walk: register a clinic, create a session, print the QR, take a token, call next
   and payment logic is unexercised at runtime.
 - No automated tests. Verification so far is typecheck, lint, build, and targeted
   probes of pure logic.
-- Razorpay is a deliberate placeholder that throws; implementing it means order
-  creation plus a timing-safe HMAC check of the checkout callback.
+- Razorpay is implemented but has never run against live keys or a real card. The
+  order-creation call and the modal are untested end to end.
+- `orphaned` holds (paid, but the session filled before issuance) are logged for a
+  manual refund; there is no automated refund and no admin screen listing them.
 - The WhatsApp template still needs submitting to Meta for approval. Body parameters
   are patient name, token number, people ahead — in that order.
 - The `your_turn` notification type is defined but never sent; only `almost_up` fires.
@@ -288,6 +506,8 @@ Walk: register a clinic, create a session, print the QR, take a token, call next
   landline-only clinic cannot register as-is.
 - The portal has no UI to close a session (only Pause), and no way to issue a token
   manually for a patient whose device was blocked by the anti-abuse indexes.
+- Parked patients are never auto-expired: if nobody recalls them, they stay on hold
+  until the session closes. There is also no cap on how many can be held at once.
 - No clinic deletion, no per-staff accounts, and no audit trail of who called which
   token.
 - No Content-Security-Policy: a useful one needs nonce plumbing through middleware, and

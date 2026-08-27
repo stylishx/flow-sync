@@ -32,6 +32,8 @@ const SessionSchema = new Schema(
       cancelled: { type: Number, default: 0, min: 0 },
       /** Online bookings issued so far. Guards `onlineQuota` atomically. */
       online: { type: Number, default: 0, min: 0 },
+      /** Currently on hold, awaiting recall. Not a running total. */
+      parked: { type: Number, default: 0, min: 0 },
     },
 
     /** Added to every wait estimate when the doctor declares an emergency. */

@@ -23,10 +23,10 @@ export default async function DashboardLayout({ children }: LayoutProps<"/portal
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl print:hidden">
+      <header className="sticky top-0 z-40 border-b border-white/40 glass-strong dark:border-white/10 print:hidden">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">
           <Link href="/portal" className="flex items-center gap-2 font-semibold">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-brand-gradient text-white shadow-brand">
               <StethoscopeIcon className="size-4" />
             </span>
             <span className="hidden sm:inline">Flow-Sync</span>

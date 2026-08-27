@@ -43,14 +43,16 @@ export async function sweepAlmostUpNotifications(sessionId: string): Promise<num
     return 0;
   }
 
+  // Position, not token number. Once a held patient is slotted back in, their number
+  // and their place in the queue disagree, so "within two of the front" has to be
+  // read off queueOrder — otherwise the wrong people get messaged.
   const candidates = await TokenModel.find({
     sessionId,
     status: "waiting",
     "notify.twoAwaySentAt": { $exists: false },
-    tokenNumber: { $lte: session.currentTokenNumber + ALMOST_UP_THRESHOLD },
   })
-    .sort({ tokenNumber: 1 })
-    .limit(10)
+    .sort({ queueOrder: 1 })
+    .limit(ALMOST_UP_THRESHOLD + 1)
     .lean();
 
   if (candidates.length === 0) return 0;
@@ -67,7 +69,11 @@ export async function sweepAlmostUpNotifications(sessionId: string): Promise<num
     );
     if (!claimed) continue;
 
-    const peopleAhead = Math.max(0, claimed.tokenNumber - session.currentTokenNumber - 1);
+    const peopleAhead = await TokenModel.countDocuments({
+      sessionId,
+      status: "waiting",
+      queueOrder: { $lt: claimed.queueOrder },
+    });
 
     const result = await provider.send({
       kind: "almost_up",

@@ -37,7 +37,7 @@ export function SettingsForm({ settings }: { settings: ClinicSettings }) {
 
   return (
     <form action={formAction} className="space-y-6">
-      <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+      <Card>
         <CardHeader>
           <CardTitle>Clinic details</CardTitle>
           <CardDescription>Shown to patients on the booking and token screens.</CardDescription>
@@ -88,7 +88,7 @@ export function SettingsForm({ settings }: { settings: ClinicSettings }) {
         </CardContent>
       </Card>
 
-      <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCardIcon className="size-4" />
@@ -123,7 +123,7 @@ export function SettingsForm({ settings }: { settings: ClinicSettings }) {
         </CardContent>
       </Card>
 
-      <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircleIcon className="size-4" />

@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
+import { releaseExpiredHolds } from "@/lib/holds";
 import { reclaimAbandonedBookings } from "@/lib/reclaim";
 
 export const runtime = "nodejs";
@@ -30,13 +31,14 @@ export async function GET(request: Request) {
   }
 
   try {
-    const summary = await reclaimAbandonedBookings();
-    if (summary.reclaimed > 0) {
+    const [summary, holds] = await Promise.all([reclaimAbandonedBookings(), releaseExpiredHolds()]);
+    if (summary.reclaimed > 0 || holds.released > 0) {
       console.log(
-        `[cron:reclaim] released ${summary.reclaimed} slot(s) across ${summary.sessionsTouched} session(s)`,
+        `[cron:reclaim] reclaimed ${summary.reclaimed} token(s) across ` +
+          `${summary.sessionsTouched} session(s); released ${holds.released} expired hold(s)`,
       );
     }
-    return NextResponse.json({ ok: true, ...summary });
+    return NextResponse.json({ ok: true, ...summary, holdsReleased: holds.released });
   } catch (error) {
     console.error("[cron:reclaim] failed:", error);
     return NextResponse.json({ ok: false, error: "Reclaim failed" }, { status: 500 });

@@ -23,9 +23,9 @@ export function LoginForm() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full max-w-sm"
     >
-      <Card className="border-border/60 bg-card/70 shadow-lg backdrop-blur-xl">
+      <Card className="rounded-3xl shadow-brand-lg">
         <CardHeader>
-          <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="mb-2 flex size-10 animate-brand-gradient items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
             <LockIcon className="size-5" />
           </div>
           <CardTitle>Staff sign in</CardTitle>
@@ -63,7 +63,11 @@ export function LoginForm() {
               </p>
             ) : null}
 
-            <Button type="submit" disabled={pending} className="w-full">
+            <Button
+              type="submit"
+              disabled={pending}
+              className="w-full animate-brand-gradient border-transparent bg-brand-gradient text-white shadow-brand hover:opacity-90"
+            >
               {pending ? <LoaderCircleIcon className="size-4 animate-spin" /> : null}
               {pending ? "Checking…" : "Sign in"}
             </Button>

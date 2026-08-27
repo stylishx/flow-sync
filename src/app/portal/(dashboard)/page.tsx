@@ -55,7 +55,7 @@ export default async function PortalHomePage() {
           {sessions.map((session) => (
             <li key={String(session._id)}>
               <Link href={`/portal/session/${String(session._id)}`} className="group block">
-                <Card className="h-full border-border/60 bg-card/70 backdrop-blur-xl transition-colors hover:border-primary/40">
+                <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-brand-lg">
                   <CardContent className="space-y-3">
                     <div className="flex items-start gap-2">
                       <div>

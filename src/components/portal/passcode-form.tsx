@@ -15,7 +15,7 @@ export function PasscodeForm() {
   const [state, formAction, pending] = useActionState(changePasscodeAction, initialState);
 
   return (
-    <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <KeyRoundIcon className="size-4" />

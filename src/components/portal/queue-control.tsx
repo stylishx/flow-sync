@@ -8,8 +8,10 @@ import {
   ClockIcon,
   PauseIcon,
   PlayIcon,
+  PauseCircleIcon,
   SkipForwardIcon,
   TriangleAlertIcon,
+  UndoIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,6 +19,8 @@ import {
   addDelayAction,
   callNextAction,
   completeCurrentAction,
+  parkCurrentAction,
+  recallParkedAction,
   setSessionStatusAction,
   skipCurrentAction,
   type ActionState,
@@ -44,6 +48,7 @@ interface QueueControlProps {
   currentTokenNumber: number;
   servingName?: string;
   waiting: QueueRow[];
+  parked: QueueRow[];
   recent: QueueRow[];
   waitingCount: number;
   consultMinutes: number;
@@ -56,6 +61,7 @@ export function QueueControl({
   currentTokenNumber,
   servingName,
   waiting,
+  parked,
   recent,
   waitingCount,
   consultMinutes,
@@ -76,7 +82,7 @@ export function QueueControl({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <Card className="overflow-hidden border-border/60 bg-card/70 backdrop-blur-xl">
+      <Card className="rounded-3xl">
         <CardContent className="pt-0">
           <NowServing
             tokenNumber={currentTokenNumber}
@@ -99,7 +105,7 @@ export function QueueControl({
           <div className="grid gap-2 sm:grid-cols-2">
             <Button
               size="lg"
-              className="sm:col-span-2"
+              className="animate-brand-gradient border-transparent bg-brand-gradient text-white shadow-brand hover:opacity-90 sm:col-span-2"
               disabled={pending || !isActive || waitingCount === 0}
               onClick={() => run(() => callNextAction(sessionId))}
             >
@@ -123,6 +129,16 @@ export function QueueControl({
             >
               <SkipForwardIcon className="size-4" />
               Skip
+            </Button>
+
+            <Button
+              variant="outline"
+              className="sm:col-span-2"
+              disabled={pending || !isActive || currentTokenNumber === 0}
+              onClick={() => run(() => parkCurrentAction(sessionId))}
+            >
+              <PauseCircleIcon className="size-4" />
+              Hold — patient not here
             </Button>
           </div>
 
@@ -181,7 +197,60 @@ export function QueueControl({
       </Card>
 
       <div className="space-y-4">
-        <Card className="border-border/60 bg-card/70 backdrop-blur-xl">
+        {parked.length > 0 ? (
+          <Card className="border-warn/40 ring-warn/30">
+            <CardContent>
+              <h2 className="mb-3 flex items-center gap-1.5 text-sm font-medium text-warn">
+                <PauseCircleIcon className="size-3.5" />
+                On hold ({parked.length})
+              </h2>
+              <ul className="space-y-2">
+                <AnimatePresence initial={false}>
+                  {parked.map((row) => (
+                    <motion.li
+                      key={row.id}
+                      layout
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -24, transition: { duration: 0.15 } }}
+                      className="space-y-2 rounded-xl bg-warn/5 px-2.5 py-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 shrink-0 font-mono text-sm text-muted-foreground tabular-nums">
+                          #{row.tokenNumber}
+                        </span>
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium">{row.name}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="mr-1 text-xs text-muted-foreground">Call back:</span>
+                        {[
+                          { label: "Next", after: 0 },
+                          { label: "After 2", after: 2 },
+                          { label: "After 5", after: 5 },
+                        ].map((option) => (
+                          <Button
+                            key={option.after}
+                            size="xs"
+                            variant="outline"
+                            disabled={pending || !isActive}
+                            onClick={() =>
+                              run(() => recallParkedAction(sessionId, row.id, option.after))
+                            }
+                          >
+                            <UndoIcon className="size-3" />
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
+              </ul>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <Card>
           <CardContent>
             <h2 className="mb-3 text-sm font-medium">Waiting ({waitingCount})</h2>
             <ul className="space-y-1.5">
@@ -228,7 +297,7 @@ export function QueueControl({
         </Card>
 
         {recent.length > 0 ? (
-          <Card className="border-border/60 bg-card/50 backdrop-blur-xl">
+          <Card className="bg-card/45">
             <CardContent>
               <h2 className="mb-3 text-sm font-medium text-muted-foreground">Recently seen</h2>
               <ul className="space-y-1">
